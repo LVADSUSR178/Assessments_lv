@@ -1,0 +1,23 @@
+1.    select CustomerID, sum(DataUsed) from customerinteractions group by CustomerID having sum(DataUsed) > avg(DataUsed);
+
+2.    select CustomerID, sum(CallDuration) from customerinteractions group by CustomerId having sum(CallDuration) in "March" > sum(CallDuration) in "February";
+
+3.    select sum(CallDuration) from customerinteractions order by Month;
+
+4.    select ProductTypeID, sum(TotalSalesAmount) from quarterlysales where ProductTypeID=1;
+
+5.     select ProductTypeID, sum(TotalSalesAmount) as "Total_sales" from quarterlysales where Quarter= "Q1" and Year= "2024" group by ProductTypeId;
+
+6.     select ProductTypeID, avg(TotalSalesAmount) as "Average_sales" from quarterlysales where ProductTypeID=1 and Quarter="Q2" and Year="2024" group by ProductTypeID;
+
+7.    select Region from sectorenergyconsumption group by Region having sum(ConsumptionKWh) > avg(ConsumptionKWh);
+
+8.    select Sector, sum(ConsumptionKWh) from sectorenergyconsumption group by Sector order by Sector;
+
+9.    select EnergySource, ConsumptionKWh from sectorenergyconsumption where Month= "February" and Year= "2024" order by EnergySource;
+
+10. select CustomerName from insuranceactivities group by CustomerName having sum(FeedbackScore) > avg(FeedbackScore) or ClaimsCount in (select ClaimsCount from insuranceactivities where Investigation="No");
+
+11.select PolicyID, sum(AnnualPremium) from insuranceactivities where Investigation="No" and ClaimsCount>=1 group by PolicyID having sum(FeedbackScore)> avg(FeedbackScore);
+
+12.select avg(FeedbackScore), PolicyType, count(ClaimsCount) from insuranceactivities group by PolicyType;
