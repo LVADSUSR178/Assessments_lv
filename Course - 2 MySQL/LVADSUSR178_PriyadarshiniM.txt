@@ -1,77 +1,124 @@
-1. select machine_id 
-from l1_maintenance_records 
-where month(maintenance_date)=3 and year(maintenance_date)=2024
-group by machine_id
-having sum(cost) > (select avg(cost) from l1_maintenance_records where month(maintenance_date)=3 and year(maintenance_date)=2024);
+1. select p.product_name, p.product_category, avg(sr.sales_amount)
+from products p
+join sales_records sr
+on p.product_id=sr.product_id
+where month(sr.sales_date)>=date_sub(now(), interval 30 day)
+group by 1,2;
 
-2.select count(maintenance_type) as frequent_maintenance, maintenance_type 
-from l1_maintenance_records 
-where month(maintenance_date)=3 and year(maintenance_date)=2024
-group by maintenance_type
-order by frequent_maintenance desc;
+2. select product_id, sum(sales_amount) as total_sales_amount,
+rank() over (order by sum(sales_amount) desc)
+from sales_records
+group by product_id limit 3;
 
-3.(select technician_name, count(maintenance_type) as num_of_tasks 
-from l1_maintenance_records 
-where month(maintenance_date)=3 and year(maintenance_date)=2024 
-group by technician_name 
-order by count(maintenance_type) desc)
-union
-(select technician_name, avg(cost) as_avg_cost
-from l1_maintenance_records
-group by technician_name
-having avg(cost) > all(select avg(cost) from l1_maintenance_records));
+3. select customer_id, percent_rank()
+over (order by sales_amount)
+from sales_records;
 
-4.select product_id, avg(incident_count_pre_update- incident_count_post_update) as avg_reduction
-from l2_updates
-group by product_id
-order by avg_reduction;
+4. select customer_id,
+case
+when month(sales_date)<= date_sub(now(), interval 180 day) the "Consistent Buyer"
+else "Occasional buyer"
+end as buyer_data
+from sale_record;
 
-5.select update_id, user_feedback_score
-from l2_updates
-where incident_count_post_update< incident_count_pre_update
-group by update_id
-order by user_feedback_score desc
-limit 1;
+5. select f.departure_airport, f.arrival_airport, avg(t.ticket_price)
+from flights f
+join tickets t
+on f.flight_id=t.flight_id
+group by f.flight_id;
 
-6.select product_id, sum(user_feedback_score) as fs
-from l2_updates
-where incident_count_post_update< incident_count_pre_update
-group by product_id
-order by fs
-limit 1;
+6. select f.flight_number, f.departure_date, count(t.ticket_id)
+from flights f 
+join tickets t 
+on f.flight_id=t.flight_id
+where t.ticket_date >= 2024-04-01
+group by f.flight_id;
 
-7.select p.patient_name, count(v.visit_id) as visits
-from  l3_patients p
-join  l3_visits v on p.patient_id=v.patient_id
-join l3_treatments t on v.visit_id=t.visit_id
-group by p.patient_name
-order by visits desc;
+7. select p.passenger_name, p.frequent_flyer_status, sum(t.ticket_price) as total_amt_spent
+from passengers p 
+join tickets t
+on p.passenger_id=t.passenger_id
+group by p.passenger_id
+order by total_amt_spent desc limit 5;
 
-8.select facility_name, count(visit_id) as num_of_visits
-from l3_facilities f
-join l3_visits v
-on f.facility_id=v.facility_id
-where month(v.visit_date)=3 and year(v.visit_date)=2024
-group by facility_name
-order by num_of_visits desc;
+8. select month(ticket_date), count(ticket_id) as total_number_of_tickets
+from tickets
+group by ticket_date
+order by count(ticket_id) desc limit 1;
 
-9.select p.insurance_provider, count(v.visit_id) as visits
-from  l3_patients p
-join  l3_visits v on p.patient_id=v.patient_id
-join l3_treatments t on v.visit_id=t.visit_id
-where quarter(visit_date)=1 and year(visit_date)=2024 and t.outcome="Complicated"
-group by p.insurance_provider
-order by visits desc;
+9. select ps.player_id, ps.game_id, avg((ps.play_date-p.registration_date)*24*60) as minutes_played
+from players p
+join playerscores ps
+on p.player_id=ps.player_id
+group by 1,2
+order by avg((ps.play_date-p.registration_date)*24*60) desc;
 
-10.select l4_products.product_name, l4_products.category, l4_sales.quantity 
-from l4_products, l4_sales
-where l4_sales.quantity in(select quantity from l4_sales order by quantity desc );
+10. select g.game_id, g.game_name, count(ps.player_id) as total_players
+from games g
+join playerscores ps
+on g.game_id=ps.game_id
+group by g.game_id
+order by count(player_id) desc;
 
-11.create view combined_sales as select * from sales, stores where sum(sales)>
+11. select game_id, avg(score) as average_score, 
+max(score) as highest_score, 
+count(player_id) as total_number_of_players
+from playerscores
+group by game_id;
 
-12.select st.region
-from stores st
-join sales s on st.store_id=s.store_id
-join  products p on s.product_id=p.product_id
-where month(sale_date)=3 and year(sale_date)=2024;
+12. select p.player_name, p.registration_date, ps.play_date
+from players p
+join playerscores ps
+on p.player_id=ps.player_id
+where ps.play_date>= 2024-04-01
+order by ps.play_date desc;
 
+13. select d.doctor_id, d.doctor_name, sum(t.cost) as treatment_cost
+from doctors d
+join treatments t
+on d.doctor_id=t.doctor_id
+group by d.doctor_id
+order by sum(t.cost) desc limit 5;
+
+14. select treatment_name, sum(cost),
+percent_rank() over (partition by treatment_name order by sum(cost) desc) as total_contribution
+from treatments
+group by treatment_name;
+
+15. select patient_id, patient_name, admission_date, discharge_date
+from patients
+where admission_date >= date_sub(discharge_date, interval 30 day)
+order by admission_date;
+
+16. select gender, diagnosis, floor(avg(discharge_date-admission_date)) as LOS
+from patients
+group by 1,2;
+
+17. select c.department, e.semester, avg(e.grade) as avg_grade
+from courses c
+join enrollments e
+on c.course_id=e.course_id
+group by 1,2
+order by avg(e.grade);
+
+18. select major, count(student_id) as number_of_students, enrollment_year
+from students
+group by student_id
+order by count(student_id) desc;
+
+19. select s.student_id, s.student_name, e.semester, c.credits
+from students s
+join enrollments e
+on s.student_id=e.student_id
+join courses c
+on e.course_id=c.course_id
+where c.credits>=50;
+
+20. select c.course_name, count(s.student_id) as number_of_students_enrolled, s.enrollment_year
+from students s
+join enrollments e
+on s.student_id=e.student_id
+join courses c
+on e.course_id=c.course_id
+group by c.course_name, s.enrollment_year
+order by count(s.student_id) desc limit 3;
